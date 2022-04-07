@@ -13,4 +13,21 @@ function getReqData(req) {
         }
     });
 }
-module.exports = { getReqData };
+
+function getReqArr(req) {
+    return new Promise((resolve, reject) => {
+        try {
+            let body = [];
+            req.on("data", (chunk) => {
+                body = [...body, chunk];
+            });
+            req.on("end", () => {
+                resolve(body);
+            });
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+module.exports = { getReqData, getReqArr };

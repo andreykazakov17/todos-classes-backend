@@ -1,5 +1,5 @@
 const http = require('http');
-const { getReqData } = require("./utils");
+const { getReqData, getReqArr} = require("./utils");
 
 const PORT = 5001;
 
@@ -19,6 +19,8 @@ let todos = [
         completed: false
     }
 ];
+
+let idsArray = [];
 
 class Controller {
 
@@ -42,7 +44,7 @@ class Controller {
         return new Promise((resolve, _) => {
             let newTodo = {
                 id: new Date().getTime(),
-                ...body,
+                text: body,
                 completed: false
             };
             resolve(newTodo);
@@ -51,7 +53,13 @@ class Controller {
 
     async deleteTodo(id) {
         return new Promise((resolve, reject) => {
+            const deletedTodo = todos.find((todo) => todo.id === parseInt(id));
             todos = todos.filter((todo) => todo.id !== parseInt(id));
+            resolve(deletedTodo.id);
+            if (!deletedTodo) {
+                reject(`No todo with id ${id} found`);
+            }
+            // else, return a success message
             resolve(`Todo deleted successfully`);
         });
     }
@@ -63,23 +71,23 @@ class Controller {
         });
     }
 
-    async updateTodoInput(body) {
+    async updateTodoInput(id, body) {
         return new Promise((resolve, reject) => {
             const parsedBody = JSON.parse(body);
-            const { id, text } = parsedBody;
-            todos = todos.map((todo) => todo.id === parseInt(id) ? { ...todo, text: text } : todo);
+            todos = todos.map((todo) => todo.id === parseInt(id) ? { ...todo, text: parsedBody } : todo);
             resolve(todos);
         });
     }
 
-    async clearCompleted() {
+    // OLD DELETE ALL
+    async clearCompleted(idsArray) {
         return new Promise((resolve) => {
-            todos = todos.filter((todo) => !todo.completed);
+            todos = todos.filter((todo) => !idsArray.includes(todo.id));
             resolve(todos);
         });
     }
 
-    async checkAllTodos() {
+    async checkAllTodos(valuesArr) {
         return new Promise((resolve) => {
             todos = todos.map((todo) => {
                 return {...todo, completed: true}
@@ -103,8 +111,10 @@ const server = http.createServer(async(req, res) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'OPTIONS, POST, GET, DELETE, PATCH',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Max-Age': 2592000,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Credentials': true
     };
 
     // get all todos
@@ -134,13 +144,24 @@ const server = http.createServer(async(req, res) => {
         res.writeHead(200, headers);
         res.end(JSON.stringify(todo));
 
+        // POST REQUEST FOR DELETING
+    } else if (req.url === "/todos/clearAll" && req.method === "POST") {
+        
+        let str = await getReqData(req);
+
+        let numArr = str.split(',').map((num) => +num);
+        let result = await new Controller().clearCompleted(numArr);
+        res.writeHead(200, headers);
+        res.end(JSON.stringify(result));
+
     } else if (req.url.match(/\/todos\/([0-9]+)/) && req.method === "POST") {
 
         try {
             const id = req.url.split("/")[2];
-            let todo_data = await getReqData(req);
+            let todoBody = await getReqData(req);
 
-            let updatedTodos = await new Controller().updateTodoInput(todo_data);
+            
+            let updatedTodos = await new Controller().updateTodoInput(id, todoBody);
             res.writeHead(200, headers);
             res.end(JSON.stringify(updatedTodos));
 
@@ -155,9 +176,9 @@ const server = http.createServer(async(req, res) => {
         try {
             const id = req.url.split("/")[2];
 
-            let result = await new Controller().deleteTodo(id);
+            const result = await new Controller().deleteTodo(id);
             res.writeHead(200, headers);
-            res.end(JSON.stringify({ result }));
+            res.end(JSON.stringify(result));
         } catch (error) {
 
             res.writeHead(404, { "Content-Type": "application/json" });
@@ -167,8 +188,9 @@ const server = http.createServer(async(req, res) => {
     } else if (req.url === "/todos" && req.method === "DELETE") {
 
         try {
+            const id = req.url.split("/")[2];
 
-            let result = await new Controller().clearCompleted();
+            let result = await new Controller().clearCompleted(id);
             res.writeHead(200, headers);
             res.end(JSON.stringify(result));
         } catch (error) {
@@ -210,6 +232,8 @@ const server = http.createServer(async(req, res) => {
             res.writeHead(404, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: error }));
         }
+
+        // TOGGLE / UNTOGGLE ALL
     } else if (req.url === "/todos" && req.method === "PATCH") {
 
         if (todos.every((todo) => todo.completed)) {
