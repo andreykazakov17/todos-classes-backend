@@ -1,77 +1,99 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 const { getReqData } = require("./utils");
 let finalhandler = require('finalhandler');
 let http = require('http');
 let Router = require('router');
+const db = 'mongodb://localhost:27017/todos';
 
-let todos = [
-    {
-        id: 1,
-        text: 'Todo1',
-        completed: false
-    },
-    {
-        id: 2,
-        text: 'Todo2',
-        completed: false
-    },{
-        id: 3,
-        text: 'Todo3',
-        completed: false
-    }
-];
+mongoose.connect(db)
+	.then((res) => console.log('Connected to DB...'))
+	.catch((err) => console.log(err));
+
+const todoSchema = new Schema({
+	text: {
+		type: String,
+		required: true
+	},
+	completed: {
+		type: Boolean,
+		required: true
+	}
+});
+
+const Todo = mongoose.model('Todo', todoSchema);
+
+// let todos = [
+//     {
+//         id: 1,
+//         text: 'Todo1',
+//         completed: false
+//     },
+//     {
+//         id: 2,
+//         text: 'Todo2',
+//         completed: false
+//     },{
+//         id: 3,
+//         text: 'Todo3',
+//         completed: false
+//     }
+// ];
 
 class Controller {
 
     async getTodos() {
-        return todos;
+		return await Todo.find();
     }
 
     async getTodo(id) {
-        let todo = todos.find((todo) => todo.id === parseInt(id));
-        return todo;
+		return await Todo.findOne(id);
     }
 
     async createTodo(body) {
-        let newTodo = {
-            id: new Date().getTime(),
-            text: body,
-            completed: false
-        };
-        return newTodo;
+		const newTodo = new Todo({
+			text: body,
+			completed: false
+		});
+		return newTodo;
     }
 
     async deleteTodo(id) {
-        const deletedTodo = todos.find((todo) => todo.id === parseInt(id));
-        todos = todos.filter((todo) => todo.id !== parseInt(id));
+        const deletedTodo = await Todo.findByIdAndDelete(id);
         return deletedTodo.id;
     }
 
     async updateTodoComplete(id) {
-        let checkedTodo = todos.find((todo) => todo.id === parseInt(id));
-        checkedTodo.completed = !checkedTodo.completed;
-        return checkedTodo;
+        const foundTodo = await Todo.findById(id);
+
+        if(!foundTodo.completed) {
+            return await Todo.findByIdAndUpdate(id, { completed: true }, { new: true } );
+        } else if (foundTodo.completed) {
+            return await Todo.findByIdAndUpdate(id, { completed: false }, { new: true } );
+        }
     }
 
     async updateTodoInput(id, body) {
         const parsedBody = JSON.parse(body);
-        return todos = todos.map((todo) => todo.id === parseInt(id) ? { ...todo, text: parsedBody } : todo);
+
+        await Todo.findByIdAndUpdate(id, { text: parsedBody }, { new: true });
+        return await Todo.find();
     }
 
     async clearCompleted(idsArray) {
-        todos = todos.filter((todo) => !idsArray.includes(todo.id));
-        return todos;
+        await Todo.deleteMany({ _id: idsArray });
+        return Todo.find();
     }
 
     async checkAllTodos() {
-        return todos = todos.map((todo) => {
-            return {...todo, completed: true};
-        });
+
+        await Todo.updateMany({ completed: true });
+        return Todo.find();
     }
 
     async uncheckAllTodos() {
-        return todos = todos.map((todo) => {
-            return {...todo, completed: false}
-        });
+        await Todo.updateMany({ completed: false });
+        return Todo.find();
     }
 }
 
@@ -99,11 +121,21 @@ router.route('/todos')
     .post(async (req, res) => {
         let todo_data = await getReqData(req);
         let todo = await new Controller().createTodo(JSON.parse(todo_data));
-        todos = [...todos, todo];
-        res.writeHead(200, headers);
-        res.end(JSON.stringify(todo));
+        //todos = [...todos, todo];
+		//console.log(todo._id.toString());
+
+		todo.save()
+			.then((result) => {
+				res.writeHead(200, headers);
+				res.end(JSON.stringify(todo))
+			})
+			.catch((err) => {
+				console.log(err);
+			});
     })
     .patch(async(req, res) => {
+
+        let todos = await Todo.find();
 
         if (todos.every((todo) => todo.completed)) {
             try {
@@ -174,7 +206,6 @@ router.route(/\/todos\/([0-9]+)/)
             res.writeHead(200, headers);
             res.end(JSON.stringify(result));
         } catch (error) {
-
             res.writeHead(404, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: error }));
         }
@@ -182,6 +213,7 @@ router.route(/\/todos\/([0-9]+)/)
     .patch(async (req, res) => {
         try {
             const id = req.url.split("/")[2];
+
             let todo = await new Controller().updateTodoComplete(id);
             res.writeHead(200, headers);
             res.end(JSON.stringify(todo));
@@ -202,8 +234,8 @@ router.route('/todos/clearAll')
     .post(async(req, res) => {
         let str = await getReqData(req);
 
-        let numArr = str.split(',').map((num) => +num);
-        let result = await new Controller().clearCompleted(numArr);
+        let idsArr = str.split(',');
+        let result = await new Controller().clearCompleted(idsArr);
         res.writeHead(200, headers);
         res.end(JSON.stringify(result));
     })
@@ -213,4 +245,6 @@ router.route('/todos/clearAll')
         return;
     });
 
-server.listen(5001);
+server.listen(5001, () => {
+	console.log('Listening port 5001');
+});
