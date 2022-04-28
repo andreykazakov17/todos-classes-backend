@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const { getReqData } = require("./utils");
 let finalhandler = require("finalhandler");
 let http = require("http");
@@ -6,10 +5,8 @@ let Router = require("router");
 require("dotenv").config();
 const Todo = require("./models/Todo");
 
-mongoose
-  .connect(process.env.DB_PATH)
-  .then((res) => console.log("Connected to DB..."))
-  .catch((err) => console.log(err));
+const connect = require("./dbConnection");
+connect();
 
 let router = Router();
 let server = http.createServer(async (req, res) => {
@@ -156,7 +153,6 @@ router
 
     //let idsArr = str.split(",");
     let idsArr = JSON.parse(str);
-    console.log(idsArr);
     await Todo.deleteMany({ _id: idsArr });
     res.writeHead(200, headers);
     res.end(JSON.stringify(await Todo.find()));
