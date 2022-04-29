@@ -1,24 +1,12 @@
 require("dotenv").config();
 const fastify = require("fastify")();
-const cors = require("@fastify/cors");
 
 fastify.register(require("./routes/todosRoutes"));
 
-// fastify.register(cors, function (instance) {
-//   return (req, callback) => {
-//     let corsOptions;
-//     const origin = req.headers.origin;
-//     // do not include CORS headers for requests from localhost
-//     const hostname = new URL(origin).hostname;
-//     if (hostname === "localhost") {
-//       corsOptions = { origin: false };
-//     } else {
-//       corsOptions = { origin: true };
-//     }
-//     callback(null, corsOptions); // callback expects two parameters: error and options
-//   };
-// });
-
+fastify.register(require("@fastify/cors"), {
+  origin: "*",
+  methods: ["POST", "PATCH", "DELETE", "GET"],
+});
 const connect = require("./dbConnection");
 connect();
 

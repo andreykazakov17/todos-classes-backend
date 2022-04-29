@@ -1,75 +1,35 @@
-const cors = require("@fastify/cors");
-const TodoModel = require("../models/TodoModel");
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE, PATCH",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": 2592000,
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Credentials": true,
-};
+const ArraySchema = require("../schemes/ArraySchema");
+const ObjectSchema = require("../schemes/ObjectSchema");
 
 const {
   getTodo,
   getTodos,
   addTodo,
-  optionsHandler,
+  toggleTodos,
+  updateTodo,
+  deleteTodo,
+  checkTodo,
+  clearCompleted,
 } = require("../controllers/todos");
 
-const ItemSchema = {
-  type: "object",
-  properties: {
-    id: { type: "string" },
-    text: { type: "string" },
-    completed: { type: "boolean" },
-  },
-};
-
-const getItemsOpts = {
-  schema: {
-    response: {
-      200: {
-        type: "array",
-        items: ItemSchema,
-      },
-    },
-  },
-  handler: getTodos,
-};
-
-const getItemOpts = {
-  schema: {
-    response: {
-      200: ItemSchema,
-    },
-  },
-  handler: getTodo,
-};
-
-const postItemOpts = {
-  schema: {
-    response: {
-      200: ItemSchema,
-    },
-  },
-  handler: addTodo,
-};
+const getItemsOpts = ArraySchema(getTodos);
+const getItemOpts = ObjectSchema(getTodo);
+const postItemOpts = ObjectSchema(addTodo);
+const updateItemsOpts = ObjectSchema(toggleTodos);
+const updateItemOpts = ObjectSchema(updateTodo);
+const deleteItemOpts = ObjectSchema(deleteTodo);
+const checkItemOpts = ObjectSchema(checkTodo);
+const clearCompletedOpts = ObjectSchema(clearCompleted);
 
 const routes = async (fastify, options, done) => {
-  fastify.register(require("@fastify/cors"), {
-    origin: "*",
-    methods: ["POST"],
-  });
-  fastify.route({
-    method: "POST",
-    url: "/product",
-    handler: optionsHandler,
-  });
-
   fastify.get("/todos", getItemsOpts);
   fastify.get("/todos/:id", getItemOpts);
   fastify.post("/todos", postItemOpts);
-  //fastify.options("/todos", optionsHandler);
+  fastify.post("/todos/:id", updateItemOpts);
+  fastify.post("/todos/clearAll", clearCompletedOpts);
+  fastify.patch("/todos", updateItemsOpts);
+  fastify.patch("/todos/:id", checkItemOpts);
+  fastify.delete("/todos/:id", deleteItemOpts);
 
   done();
 };
