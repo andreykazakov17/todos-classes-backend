@@ -12,6 +12,14 @@ const todoSchema = new Schema({
   },
 });
 
-const Todo = mongoose.model("Todo", todoSchema);
+todoSchema.set("toJSON", {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    delete ret._id;
+  },
+});
 
-module.exports = Todo;
+const TodoModel = mongoose.model("Todo", todoSchema);
+
+module.exports = TodoModel;

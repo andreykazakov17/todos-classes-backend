@@ -3,10 +3,10 @@ let finalhandler = require("finalhandler");
 let http = require("http");
 let Router = require("router");
 require("dotenv").config();
-const Todo = require("./models/Todo");
+const Todo = require("./models/TodoModel");
 
-const connect = require("./dbConnection");
-connect();
+// const connect = require("./dbConnection");
+// connect();
 
 let router = Router();
 let server = http.createServer(async (req, res) => {
@@ -163,6 +163,6 @@ router
     return;
   });
 
-server.listen(process.env.PORT, () => {
-  console.log(`Listening port ${process.env.PORT}`);
-});
+// server.listen(process.env.PORT, () => {
+//   console.log(`Listening port ${process.env.PORT}`);
+// });
