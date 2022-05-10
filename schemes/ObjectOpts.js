@@ -1,4 +1,4 @@
-const ObjectOpts = {
+const TodoOpts = {
   type: "object",
   properties: {
     id: { type: "string" },
@@ -7,4 +7,19 @@ const ObjectOpts = {
   },
 };
 
-module.exports = ObjectOpts;
+const userOpts = {
+  type: "object",
+  properties: {
+    email: {
+      type: "string",
+    },
+    password: {
+      type: "string",
+    },
+    isAuth: {
+      type: "boolean",
+    },
+  },
+};
+
+module.exports = { TodoOpts, userOpts };

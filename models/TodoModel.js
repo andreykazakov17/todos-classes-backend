@@ -10,6 +10,10 @@ const todoSchema = new Schema({
     type: Boolean,
     required: true,
   },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 todoSchema.set("toJSON", {

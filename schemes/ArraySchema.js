@@ -6,7 +6,7 @@ const ArraySchema = (handler) => {
       response: {
         200: {
           type: "array",
-          items: ObjectOpts,
+          items: ObjectOpts.TodoOpts,
         },
       },
     },

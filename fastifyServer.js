@@ -4,9 +4,25 @@ const fastify = require("fastify")();
 fastify.register(require("./routes/todosRoutes"));
 
 fastify.register(require("@fastify/cors"), {
-  origin: "*",
+  origin: (origin, cb) => {
+    const hostname = new URL(origin).hostname;
+    if (hostname === "localhost") {
+      cb(null, true);
+      return;
+    }
+    cb(new Error("Not allowed"));
+  },
   methods: ["POST", "PATCH", "DELETE", "GET"],
+  credentials: true,
 });
+fastify.register(require("@fastify/cookie"), {
+  secret: "my-secret", // for cookies signature
+  parseOptions: {},
+});
+// fastify.register(require("@fastify/jwt"), {
+//   secret: "supersecret",
+// });
+
 const connect = require("./dbConnection");
 connect();
 

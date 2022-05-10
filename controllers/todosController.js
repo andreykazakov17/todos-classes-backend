@@ -1,7 +1,9 @@
 const TodoModel = require("../models/TodoModel");
+const UserModel = require("../models/UserModel");
+const UserDto = require("../dataTrasferObjects/userDto");
 
 const headers = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "http://localhost:3000",
   "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE, PATCH",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": 2592000,
@@ -19,20 +21,39 @@ const getTodo = async (req, res) => {
   }
 };
 
-const getTodos = async (req, res) => {
+const getUser = async (req, res) => {
   try {
     res.headers(headers);
-    res.send(await TodoModel.find());
+    const user = await UserModel.findOne({ isAuth: true });
+    const userDto = new UserDto(user);
+    res.send(userDto);
+  } catch (error) {
+    res.code(500).send({ message: "Server error" });
+  }
+};
+
+const getTodos = async (req, res) => {
+  try {
+    const user = await UserModel.findOne({ isAuth: true });
+    const todosArr = await TodoModel.find({ user: user._id });
+    console.log(todosArr);
+    res.headers(headers);
+    res.send(todosArr);
   } catch (error) {
     res.code(500).send({ message: "Server error" });
   }
 };
 
 const addTodo = async (req, reply) => {
+  const user = await UserModel.findOne({ isAuth: true });
+  const userDto = new UserDto(user);
   let newTodo = await new TodoModel({
     text: req.body,
     completed: false,
+    user: userDto.id,
   });
+
+  console.log(newTodo);
 
   await newTodo.save();
   reply.headers(headers);
@@ -122,6 +143,7 @@ const clearCompleted = async (req, res) => {
 
 module.exports = {
   getTodo,
+  getUser,
   getTodos,
   addTodo,
   toggleTodos,
