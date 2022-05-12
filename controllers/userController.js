@@ -42,7 +42,6 @@ const registration = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  console.log(req.body);
   try {
     const { email, password } = req.body;
     const user = await UserModel.findOne({ email });
@@ -53,9 +52,6 @@ const login = async (req, res) => {
     if (!validPassword) {
       return res.code(400).send({ message: "Incorrect password" });
     }
-
-    console.log(user);
-    console.log("user.id", user.id);
 
     const userDto = new UserDto(user);
 
@@ -72,21 +68,6 @@ const login = async (req, res) => {
     console.log(e);
     res.code(400).send({ message: "Login error" });
   }
-};
-
-const logout = async (req, res) => {
-  try {
-    const user = await UserModel.findOne({ isAuth: true });
-    console.log("user", user);
-    const unauthentificatedUser = await UserModel.findByIdAndUpdate(
-      user.id,
-      {
-        isAuth: false,
-      },
-      { new: true }
-    );
-    res.send(unauthentificatedUser);
-  } catch (e) {}
 };
 
 const refresh = async (req, res) => {
@@ -113,4 +94,4 @@ const refresh = async (req, res) => {
   } catch (e) {}
 };
 
-module.exports = { registration, login, logout, refresh };
+module.exports = { registration, login, refresh };

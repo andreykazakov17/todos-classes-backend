@@ -23,7 +23,6 @@ const getTodo = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
-    console.log("req.body", req.body);
     res.headers(headers);
     const user = await UserModel.findOne({ id: req.body });
     const userDto = new UserDto(user);
