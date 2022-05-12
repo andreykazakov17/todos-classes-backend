@@ -1,6 +1,5 @@
 const ArraySchema = require("../schemes/ArraySchema");
 const ObjectSchema = require("../schemes/ObjectSchema");
-const userController = require("../controllers/userController");
 const UserSchema = require("../schemes/UserSchema");
 
 const {
@@ -26,12 +25,7 @@ const checkItemOpts = ObjectSchema(checkTodo);
 const clearCompletedOpts = ObjectSchema(clearCompleted);
 
 const routes = async (fastify, options, done) => {
-  fastify.post("/todos/registration", userController.registration);
-  fastify.post("/todos/login", userController.login);
-  fastify.post("/todos/logout", userController.logout);
-  fastify.get("/todos/refresh", userController.refresh);
-
-  fastify.get("/todos/user", getUserOpts);
+  fastify.post("/todos/user", getUserOpts);
   fastify.get("/todos", getItemsOpts);
   fastify.get("/todos/:id", getItemOpts);
   fastify.post("/todos", postItemOpts);

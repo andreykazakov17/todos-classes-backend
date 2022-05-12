@@ -4,6 +4,7 @@ const TodoOpts = {
     id: { type: "string" },
     text: { type: "string" },
     completed: { type: "boolean" },
+    user: { type: "string" },
   },
 };
 
@@ -16,8 +17,8 @@ const userOpts = {
     password: {
       type: "string",
     },
-    isAuth: {
-      type: "boolean",
+    id: {
+      type: "string",
     },
   },
 };

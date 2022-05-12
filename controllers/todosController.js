@@ -23,10 +23,13 @@ const getTodo = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
+    console.log("req.body", req.body);
     res.headers(headers);
-    const user = await UserModel.findOne({ isAuth: true });
+    const user = await UserModel.findOne({ id: req.body });
     const userDto = new UserDto(user);
-    res.send(userDto);
+    console.log(userDto.id);
+    //res.send({ email: user.email, id: user._id });
+    res.send({ ...userDto });
   } catch (error) {
     res.code(500).send({ message: "Server error" });
   }
@@ -34,9 +37,8 @@ const getUser = async (req, res) => {
 
 const getTodos = async (req, res) => {
   try {
-    const user = await UserModel.findOne({ isAuth: true });
-    const todosArr = await TodoModel.find({ user: user._id });
-    console.log(todosArr);
+    //const user = await UserModel.findOne({ isAuth: true });
+    const todosArr = await TodoModel.find();
     res.headers(headers);
     res.send(todosArr);
   } catch (error) {
@@ -52,8 +54,6 @@ const addTodo = async (req, reply) => {
     completed: false,
     user: userDto.id,
   });
-
-  console.log(newTodo);
 
   await newTodo.save();
   reply.headers(headers);
