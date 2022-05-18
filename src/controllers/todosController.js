@@ -1,6 +1,5 @@
 const TodoModel = require("../models/TodoModel");
 const UserModel = require("../models/UserModel");
-const UserDto = require("../dataTrasferObjects/userDto");
 
 const headers = {
   "Access-Control-Allow-Origin": "http://localhost:3000",
@@ -14,72 +13,69 @@ const headers = {
 const getTodo = async (req, res) => {
   try {
     const { id } = req.params;
+    const todo = await TodoModel.findOne({ _id: id });
     res.headers(headers);
-    res.send(await TodoModel.findOne({ _id: id }));
+    res.send(todo);
   } catch (error) {
-    res.code(500).send({ message: `Can't find todo with this id` });
-  }
-};
-
-const getUser = async (req, res) => {
-  try {
-    res.headers(headers);
-    const user = await UserModel.findOne({ id: req.body });
-    const userDto = new UserDto(user);
-    console.log(userDto.id);
-    //res.send({ email: user.email, id: user._id });
-    res.send({ ...userDto });
-  } catch (error) {
-    res.code(500).send({ message: "Server error" });
+    res.code(500).send({ message: "Can't find todo with this id" });
   }
 };
 
 const getTodos = async (req, res) => {
   try {
-    //const user = await UserModel.findOne({ isAuth: true });
-    const todosArr = await TodoModel.find();
+    const user = await req.user;
+    if (!user) {
+      res.code(500).send({ message: "Bad request" });
+      return;
+    }
+    const todosArr = await TodoModel.find({ user: user.id });
     res.headers(headers);
     res.send(todosArr);
   } catch (error) {
-    res.code(500).send({ message: "Server error" });
+    res.code(500).send({ message: "Can't get todos" });
   }
 };
 
 const addTodo = async (req, reply) => {
-  const user = await UserModel.findOne({ isAuth: true });
-  const userDto = new UserDto(user);
-  let newTodo = await new TodoModel({
-    text: req.body,
-    completed: false,
-    user: userDto.id,
-  });
+  try {
+    const userData = await req.user;
+    const user = await UserModel.findOne({ _id: userData.id });
+    let newTodo = await new TodoModel({
+      text: req.body,
+      completed: false,
+      user: user._id,
+    });
 
-  await newTodo.save();
-  reply.headers(headers);
-  reply.send(JSON.stringify(newTodo));
+    await newTodo.save();
+    reply.headers(headers);
+    reply.send(JSON.stringify(newTodo));
+  } catch (e) {
+    res.code(500).send({ message: "Can't create todo" });
+  }
 };
 
 const toggleTodos = async (req, res) => {
-  let todos = await TodoModel.find();
+  const user = await req.user;
+  let todos = await TodoModel.find({ user: user.id });
 
   if (todos.every((todo) => todo.completed)) {
     try {
-      await TodoModel.updateMany({ completed: false });
+      await TodoModel.updateMany({ user: user.id }, { completed: false });
       res.headers(headers);
-      res.send(JSON.stringify(await TodoModel.find()));
+      res.send(JSON.stringify(await TodoModel.find({ user: user.id })));
     } catch (error) {
-      res.code(500).send({ message: error });
+      res.code(500).send({ message: "Can't update many todos" });
     }
   } else if (
     todos.every((todo) => !todo.completed) ||
     todos.some((todo) => todo.completed)
   ) {
     try {
-      await TodoModel.updateMany({ completed: true });
+      await TodoModel.updateMany({ user: user.id }, { completed: true });
       res.headers(headers);
-      res.send(JSON.stringify(await TodoModel.find()));
+      res.send(JSON.stringify(await TodoModel.find({ user: user.id })));
     } catch (error) {
-      res.send({ message: error });
+      res.code(500).send({ message: "Can't update many todos" });
     }
   }
 };
@@ -96,7 +92,7 @@ const updateTodo = async (req, res) => {
     res.headers(headers);
     res.send(JSON.stringify(updatedTodo));
   } catch (error) {
-    res.send({ message: error });
+    res.code(500).send({ message: "Can't update todo text" });
   }
 };
 
@@ -109,7 +105,7 @@ const deleteTodo = async (req, res) => {
     res.headers(headers);
     res.send(JSON.stringify(deletedTodoId));
   } catch (error) {
-    res.send({ message: error });
+    res.code(500).send({ message: "Can't delete todo" });
   }
 };
 
@@ -126,23 +122,23 @@ const checkTodo = async (req, res) => {
     res.headers(headers);
     res.send(JSON.stringify(todo));
   } catch (error) {
-    res.send({ message: error });
+    res.code(500).send({ message: "Can't check todo" });
   }
 };
 
 const clearCompleted = async (req, res) => {
   try {
+    const user = await req.user;
     await TodoModel.deleteMany({ _id: req.body });
     res.headers(headers);
-    res.send(JSON.stringify(await TodoModel.find()));
+    res.send(JSON.stringify(await TodoModel.find({ user: user.id })));
   } catch (error) {
-    res.send({ message: error });
+    res.code(500).send({ message: "Can't clear completed todos" });
   }
 };
 
 module.exports = {
   getTodo,
-  getUser,
   getTodos,
   addTodo,
   toggleTodos,

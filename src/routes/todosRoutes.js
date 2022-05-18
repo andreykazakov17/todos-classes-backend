@@ -1,9 +1,8 @@
 const ArraySchema = require("../schemes/ArraySchema");
 const ObjectSchema = require("../schemes/ObjectSchema");
-const UserSchema = require("../schemes/UserSchema");
+const auth = require("../middleware/auth");
 
 const {
-  getUser,
   getTodo,
   getTodos,
   addTodo,
@@ -14,24 +13,28 @@ const {
   clearCompleted,
 } = require("../controllers/todosController");
 
-const getUserOpts = UserSchema(getUser);
 const getItemsOpts = ArraySchema(getTodos);
 const getItemOpts = ObjectSchema(getTodo);
-const postItemOpts = ObjectSchema(addTodo);
-const updateItemsOpts = ObjectSchema(toggleTodos);
 const updateItemOpts = ObjectSchema(updateTodo);
 const deleteItemOpts = ObjectSchema(deleteTodo);
 const checkItemOpts = ObjectSchema(checkTodo);
 const clearCompletedOpts = ObjectSchema(clearCompleted);
 
 const routes = async (fastify, options, done) => {
-  fastify.post("/todos/user", getUserOpts);
-  fastify.get("/todos", getItemsOpts);
+  fastify.get("/todos", { schema: ArraySchema, preHandler: [auth] }, getTodos);
   fastify.get("/todos/:id", getItemOpts);
-  fastify.post("/todos", postItemOpts);
+  fastify.post("/todos", { schema: ObjectSchema, preHandler: [auth] }, addTodo);
   fastify.post("/todos/:id", updateItemOpts);
-  fastify.post("/todos/clearAll", clearCompletedOpts);
-  fastify.patch("/todos", updateItemsOpts);
+  fastify.post(
+    "/todos/clearAll",
+    { schema: ObjectSchema, preHandler: [auth] },
+    clearCompleted
+  );
+  fastify.patch(
+    "/todos",
+    { schema: ObjectSchema, preHandler: [auth] },
+    toggleTodos
+  );
   fastify.patch("/todos/:id", checkItemOpts);
   fastify.delete("/todos/:id", deleteItemOpts);
 

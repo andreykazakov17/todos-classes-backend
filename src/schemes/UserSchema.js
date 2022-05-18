@@ -1,10 +1,10 @@
-const ObjectOpts = require("./ObjectOpts");
+const { userOpts } = require("./ObjectOpts");
 
 const UserSchema = (handler) => {
   return {
     schema: {
       response: {
-        200: ObjectOpts.userOpts,
+        200: userOpts,
       },
     },
     handler: handler,

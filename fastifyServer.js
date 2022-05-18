@@ -1,9 +1,5 @@
 require("dotenv").config();
 const fastify = require("fastify")();
-// { logger: true }
-
-fastify.register(require("./routes/authorizationRoutes"));
-fastify.register(require("./routes/todosRoutes"));
 
 fastify.register(require("@fastify/cors"), {
   origin: (origin, cb) => {
@@ -18,12 +14,12 @@ fastify.register(require("@fastify/cors"), {
   credentials: true,
 });
 fastify.register(require("@fastify/cookie"), {
-  secret: "my-secret", // for cookies signature
+  secret: "my-secret",
   parseOptions: {},
 });
-// fastify.register(require("@fastify/jwt"), {
-//   secret: "supersecret",
-// });
+
+fastify.register(require("./src/routes/authorizationRoutes"));
+fastify.register(require("./src/routes/todosRoutes"));
 
 const connect = require("./dbConnection");
 connect();

@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const {
   generateTokens,
   saveToken,
-  validateAccessToken,
   findToken,
   validateRefreshToken,
   removeToken,
@@ -11,7 +10,6 @@ const {
 
 const UserModel = require("../models/UserModel");
 const UserDto = require("../dataTrasferObjects/userDto");
-const TokenModel = require("../models/TokenModel");
 
 const registration = async (req, res) => {
   try {
@@ -37,7 +35,7 @@ const registration = async (req, res) => {
     res.send({ ...tokens, user: userDto });
   } catch (e) {
     console.log(e);
-    res.code(400).send({ message: "Registration error" });
+    res.code(401).send({ message: "Registration error" });
   }
 };
 
@@ -66,19 +64,35 @@ const login = async (req, res) => {
     res.send({ ...tokens, user: userDto });
   } catch (e) {
     console.log(e);
-    res.code(400).send({ message: "Login error" });
+    res.code(401).send({ message: "Login error" });
+  }
+};
+
+const  logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    const token = await removeToken(refreshToken);
+    res.clearCookie("refreshToken");
+    res.send(token);
+  } catch (e) {
+    console.log(e);
   }
 };
 
 const refresh = async (req, res) => {
   try {
     const { refreshToken } = req.cookies;
-    const userData = validateRefreshToken(refreshToken);
+    if (!refreshToken) {
+      res.code(401).send({ message: "Refresh token error" });
+    }
+    const userData = await validateRefreshToken(refreshToken);
     const tokenFromDb = await findToken(refreshToken);
+
     if (!userData || !tokenFromDb) {
-      res.code(500).send({ message: "Refresh token error" });
+      res.code(401).send({ message: "Refresh token error" });
     }
     const user = await UserModel.findById(userData.id);
+
     const userDto = new UserDto(user);
     const tokens = generateTokens({ ...userDto });
 
@@ -91,7 +105,23 @@ const refresh = async (req, res) => {
     });
 
     res.send({ ...tokens, user: userDto });
-  } catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
 };
 
-module.exports = { registration, login, refresh };
+const getUser = async (req, res) => {
+  try {
+    const userId = req.body;
+
+    const user = await UserModel.findOne({ _id: userId });
+
+    const userDto = new UserDto(user);
+
+    res.send({ ...userDto });
+  } catch (error) {
+    res.code(500).send({ message: "Server error" });
+  }
+};
+
+module.exports = { registration, login, logout, refresh, getUser };
