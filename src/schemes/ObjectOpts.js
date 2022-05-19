@@ -1,24 +1,24 @@
 const TodoOpts = {
-  type: "object",
+  type: 'object',
   properties: {
-    id: { type: "string" },
-    text: { type: "string" },
-    completed: { type: "boolean" },
-    user: { type: "string" },
+    id: { type: 'string' },
+    text: { type: 'string' },
+    completed: { type: 'boolean' },
+    user: { type: 'string' },
   },
 };
 
 const userOpts = {
-  type: "object",
+  type: 'object',
   properties: {
     email: {
-      type: "string",
+      type: 'string',
     },
     password: {
-      type: "string",
+      type: 'string',
     },
     id: {
-      type: "string",
+      type: 'string',
     },
   },
 };

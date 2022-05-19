@@ -1,6 +1,7 @@
-const { validateAccessToken } = require("../service/tokenService");
-const UnauthorizedError = new Error("User not authorized");
-UnauthorizedError.statusCode = "401";
+const { validateAccessToken } = require('../service/tokenService');
+
+const UnauthorizedError = new Error('User not authorized');
+UnauthorizedError.statusCode = '401';
 
 module.exports = function (req, res, next) {
   try {
@@ -9,7 +10,7 @@ module.exports = function (req, res, next) {
       throw UnauthorizedError;
     }
 
-    const accessToken = authorizationHeader.split(" ")[1];
+    const accessToken = authorizationHeader.split(' ')[1];
     if (!accessToken) {
       throw UnauthorizedError;
     }

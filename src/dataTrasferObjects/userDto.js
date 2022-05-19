@@ -1,5 +1,6 @@
 module.exports = class UserDto {
   email;
+
   id;
 
   constructor(model) {

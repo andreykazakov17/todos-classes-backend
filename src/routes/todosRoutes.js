@@ -1,6 +1,6 @@
-const ArraySchema = require("../schemes/ArraySchema");
-const ObjectSchema = require("../schemes/ObjectSchema");
-const auth = require("../middleware/auth");
+const ArraySchema = require('../schemes/ArraySchema');
+const ObjectSchema = require('../schemes/ObjectSchema');
+const auth = require('../middleware/auth');
 
 const {
   getTodo,
@@ -11,32 +11,26 @@ const {
   deleteTodo,
   checkTodo,
   clearCompleted,
-} = require("../controllers/todosController");
+} = require('../controllers/todosController');
 
-const getItemsOpts = ArraySchema(getTodos);
-const getItemOpts = ObjectSchema(getTodo);
-const updateItemOpts = ObjectSchema(updateTodo);
-const deleteItemOpts = ObjectSchema(deleteTodo);
-const checkItemOpts = ObjectSchema(checkTodo);
-const clearCompletedOpts = ObjectSchema(clearCompleted);
+const getItemsOpts = ArraySchema(auth, getTodos);
+const getItemOpts = ObjectSchema(auth, getTodo);
+const addTodoOpts = ObjectSchema(auth, addTodo);
+const updateItemOpts = ObjectSchema(auth, updateTodo);
+const deleteItemOpts = ObjectSchema(auth, deleteTodo);
+const checkItemOpts = ObjectSchema(auth, checkTodo);
+const clearCompletedOpts = ObjectSchema(auth, clearCompleted);
+const toggleTodosOpts = ArraySchema(auth, toggleTodos);
 
 const routes = async (fastify, options, done) => {
-  fastify.get("/todos", { schema: ArraySchema, preHandler: [auth] }, getTodos);
-  fastify.get("/todos/:id", getItemOpts);
-  fastify.post("/todos", { schema: ObjectSchema, preHandler: [auth] }, addTodo);
-  fastify.post("/todos/:id", updateItemOpts);
-  fastify.post(
-    "/todos/clearAll",
-    { schema: ObjectSchema, preHandler: [auth] },
-    clearCompleted
-  );
-  fastify.patch(
-    "/todos",
-    { schema: ObjectSchema, preHandler: [auth] },
-    toggleTodos
-  );
-  fastify.patch("/todos/:id", checkItemOpts);
-  fastify.delete("/todos/:id", deleteItemOpts);
+  fastify.get('/todos', getItemsOpts);
+  fastify.get('/todos/:id', getItemOpts);
+  fastify.post('/todos', addTodoOpts);
+  fastify.post('/todos/:id', updateItemOpts);
+  fastify.post('/todos/clearAll', clearCompletedOpts);
+  fastify.patch('/todos', toggleTodosOpts);
+  fastify.patch('/todos/:id', checkItemOpts);
+  fastify.delete('/todos/:id', deleteItemOpts);
 
   done();
 };

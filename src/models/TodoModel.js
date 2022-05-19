@@ -1,5 +1,6 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
 
 const todoSchema = new Schema({
   text: {
@@ -12,18 +13,18 @@ const todoSchema = new Schema({
   },
   user: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
   },
 });
 
-todoSchema.set("toJSON", {
+todoSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
-  transform: function (doc, ret) {
+  transform(doc, ret) {
     delete ret._id;
   },
 });
 
-const TodoModel = mongoose.model("Todo", todoSchema);
+const TodoModel = mongoose.model('Todo', todoSchema);
 
 module.exports = TodoModel;
